@@ -1,0 +1,2 @@
+id,type,amount,frequencyMonths,executionDay,nextExecutionDate,status,sourceAccountIban,destinationAccountIban,rfCode,providerName,description,ownerUsername
+SO000001,TRANSFER,100.00,1,15,2026-02-15,ACTIVE,GR100000000000000001,GR100000000000000003,,,Monthly allowance,john
