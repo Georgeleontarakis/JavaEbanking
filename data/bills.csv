@@ -1,5 +1,5 @@
 id,providerName,amount,dueDate,status,paidDate,rfCode,ownerUsername,issuerUsername
 BILL000001,Greek Utilities Co,85.50,2026-01-12,OVERDUE,,RF00001234,john,utility
-BILL000002,TechCorp Solutions,199.99,2026-01-27,OVERDUE,,RF00001235,john,techcorp
+BILL000002,TechCorp Solutions,199.99,2026-01-27,PAID,2025-12-30 13:04:21,RF00001235,john,techcorp
 BILL000003,Greek Utilities Co,72.30,2026-01-17,OVERDUE,,RF00001236,maria,utility
 BILL000004,Greek Utilities Co,95.00,2026-01-07,OVERDUE,,RF00001237,nikos,utility
