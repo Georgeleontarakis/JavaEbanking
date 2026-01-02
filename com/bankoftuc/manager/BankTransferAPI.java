@@ -73,8 +73,9 @@ public class BankTransferAPI {
         
         String dateStr = executionDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         
-        // Build JSON request
-        String jsonRequest = String.format(
+        
+        // Build JSON request - use Locale.US to ensure decimal point
+        String jsonRequest = String.format(java.util.Locale.US,
             "{" +
             "\"amount\": %.2f," +
             "\"creditor\": {" +
@@ -142,8 +143,8 @@ public class BankTransferAPI {
             String bankCountry,
             String chargingModel) {
         
-        // Build JSON request
-        String jsonRequest = String.format(
+        // Build JSON request - use Locale.US to ensure decimal point
+        String jsonRequest = String.format(java.util.Locale.US,
             "{" +
             "\"currency\": \"%s\"," +
             "\"amount\": %.2f," +
