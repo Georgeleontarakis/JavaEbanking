@@ -105,6 +105,47 @@ public class TransactionManager {
         
         return outgoing;
     }
+    /**
+     * Record a bill payment transaction
+     * This is used for standing order bill payments and manual bill payments
+     */
+    public Transaction recordBillPayment(Account fromAccount, BigDecimal amount, String description) {
+        // Note: The actual withdrawal should already be done before calling this
+        // This method just records the transaction
+        Transaction transaction = new Transaction(
+            transactionIdCounter.getAndIncrement(),
+            fromAccount, null,
+            amount,
+            TransactionType.BILL_PAYMENT,
+            description != null ? description : "Bill payment"
+        );
+        transaction.setBalanceAfter(fromAccount.getBalance());
+        transactions.add(transaction);
+        return transaction;
+    }
+    
+    /**
+     * Pay a bill - withdraws from account and records transaction
+     */
+    public Transaction payBill(Account fromAccount, BigDecimal amount, String description) {
+        if (fromAccount.getBalance().compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient funds");
+        }
+        
+        fromAccount.withdraw(amount);
+        
+        Transaction transaction = new Transaction(
+            transactionIdCounter.getAndIncrement(),
+            fromAccount, null,
+            amount,
+            TransactionType.BILL_PAYMENT,
+            description != null ? description : "Bill payment"
+        );
+        transaction.setBalanceAfter(fromAccount.getBalance());
+        transactions.add(transaction);
+        return transaction;
+    }
+
     
     /**
      * Execute a SEPA transfer using the Bank Transfer API

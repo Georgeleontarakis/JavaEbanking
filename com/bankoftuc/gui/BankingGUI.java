@@ -1,27 +1,38 @@
 package com.bankoftuc.gui;
 
-// JavaFX Imports 
+// JavaFX Imports - CORRECT
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*; // Imports Label, Button, TableView, etc.
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 // Project Imports
 import com.bankoftuc.manager.BankSystem;
 import com.bankoftuc.model.*;
 
 // Java Utility Imports
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Main JavaFX Application for Bank of TUC eBanking System.
@@ -167,10 +178,11 @@ public class BankingGUI extends Application {
         Button btnPayBill = createMenuButton("💳 Pay Bill");
         Button btnStatements = createMenuButton("📋 Statements");
         Button btnStandingOrders = createMenuButton("⏰ Standing Orders");
+        Button btnCreateStandingOrder = createMenuButton("➕ New Standing Order");
         
         menu.getChildren().addAll(btnOverview, new Separator(), btnDeposit, btnWithdraw, 
             btnTransfer, new Separator(), btnSepa, btnSwift, new Separator(),
-            btnBills, btnPayBill, new Separator(), btnStatements, btnStandingOrders);
+            btnBills, btnPayBill, new Separator(), btnStatements, btnStandingOrders, btnCreateStandingOrder);
         
         root.setLeft(menu);
         
@@ -190,6 +202,7 @@ public class BankingGUI extends Application {
         btnPayBill.setOnAction(e -> showPayBillForm(content, user));
         btnStatements.setOnAction(e -> showStatements(content, user));
         btnStandingOrders.setOnAction(e -> showStandingOrders(content, user));
+        btnCreateStandingOrder.setOnAction(e -> showCreateStandingOrderForm(content, user));
         
         // Show overview by default
         showAccountOverview(content, user);
@@ -272,10 +285,12 @@ public class BankingGUI extends Application {
         Button btnUsers = createMenuButton("👥 Manage Users");
         Button btnAccounts = createMenuButton("🏦 View Accounts");
         Button btnTransactions = createMenuButton("📊 All Transactions");
+        Button btnBills = createMenuButton("📄 All Bills");
+        Button btnStandingOrders = createMenuButton("⏰ All Standing Orders");
         Button btnSimulate = createMenuButton("⏩ Time Simulation");
         Button btnSystemInfo = createMenuButton("ℹ️ System Info");
         
-        menu.getChildren().addAll(btnUsers, btnAccounts, btnTransactions, 
+        menu.getChildren().addAll(btnUsers, btnAccounts, btnTransactions, btnBills, btnStandingOrders,
             new Separator(), btnSimulate, btnSystemInfo);
         
         root.setLeft(menu);
@@ -289,6 +304,8 @@ public class BankingGUI extends Application {
         btnUsers.setOnAction(e -> showUserManagement(content));
         btnAccounts.setOnAction(e -> showAllAccounts(content));
         btnTransactions.setOnAction(e -> showAllTransactions(content));
+        btnBills.setOnAction(e -> showAllBills(content));
+        btnStandingOrders.setOnAction(e -> showAllStandingOrders(content));
         btnSimulate.setOnAction(e -> showTimeSimulation(content));
         btnSystemInfo.setOnAction(e -> showSystemInfo(content));
         
@@ -355,7 +372,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Account Overview");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -401,7 +418,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Deposit Money");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -438,7 +455,7 @@ public class BankingGUI extends Application {
                     }
                     
                     PersonalAccount acc = accounts.get(idx);
-                    bankSystem.getTransactionManager().deposit(acc, new java.math.BigDecimal(amount), "GUI Deposit");
+                    bankSystem.getTransactionManager().deposit(acc, new BigDecimal(amount), "GUI Deposit");
                     bankSystem.saveToFile();
                     
                     resultLabel.setText(String.format("Successfully deposited €%.2f", amount));
@@ -477,7 +494,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Withdraw Money");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -509,7 +526,7 @@ public class BankingGUI extends Application {
                     double amount = Double.parseDouble(amountField.getText());
                     PersonalAccount acc = accounts.get(idx);
                     
-                    bankSystem.getTransactionManager().withdraw(acc, new java.math.BigDecimal(amount), "GUI Withdrawal");
+                    bankSystem.getTransactionManager().withdraw(acc, new BigDecimal(amount), "GUI Withdrawal");
                     bankSystem.saveToFile();
                     
                     resultLabel.setText(String.format("Successfully withdrew €%.2f", amount));
@@ -551,7 +568,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Internal Transfer");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -598,7 +615,7 @@ public class BankingGUI extends Application {
                     PersonalAccount fromAcc = accounts.get(idx);
                     
                     bankSystem.getTransactionManager().transfer(fromAcc, toAcc, 
-                        new java.math.BigDecimal(amount), descField.getText());
+                        new BigDecimal(amount), descField.getText());
                     bankSystem.saveToFile();
                     
                     resultLabel.setText(String.format("Successfully transferred €%.2f", amount));
@@ -649,7 +666,7 @@ public class BankingGUI extends Application {
         Label feeLabel = new Label("Fee: " + fee + " | Success Rate: 75%");
         feeLabel.setStyle("-fx-text-fill: #666;");
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -702,12 +719,12 @@ public class BankingGUI extends Application {
                     
                     if (type.equals("SEPA")) {
                         bankSystem.getTransactionManager().sepaTransferFull(
-                            fromAcc, ibanField.getText(), new java.math.BigDecimal(amount),
+                            fromAcc, ibanField.getText(), new BigDecimal(amount),
                             descField.getText(), nameField.getText(), bankCodeField.getText(),
                             bankNameField.getText(), "SHA");
                     } else {
                         bankSystem.getTransactionManager().swiftTransferFull(
-                            fromAcc, ibanField.getText(), new java.math.BigDecimal(amount),
+                            fromAcc, ibanField.getText(), new BigDecimal(amount),
                             descField.getText(), "EUR", nameField.getText(), "",
                             bankNameField.getText(), bankCodeField.getText(), "", "SHA");
                     }
@@ -752,7 +769,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Your Bills");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var bills = bankSystem.getBillManager().getBillsForUser(user);
+        List<Bill> bills = bankSystem.getBillManager().getBillsForUser(user);
         
         if (bills.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any bills."));
@@ -806,8 +823,8 @@ public class BankingGUI extends Application {
         Label feeLabel = new Label("Fee: €0.50 per payment");
         feeLabel.setStyle("-fx-text-fill: #666;");
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
-        var unpaidBills = bankSystem.getBillManager().getUnpaidBillsForUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<Bill> unpaidBills = bankSystem.getBillManager().getUnpaidBillsForUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -848,7 +865,7 @@ public class BankingGUI extends Application {
                     PersonalAccount acc = accounts.get(accIdx);
                     Bill bill = unpaidBills.get(billIdx);
                     
-                    java.math.BigDecimal totalAmount = bill.getAmount().add(new java.math.BigDecimal("0.50"));
+                    BigDecimal totalAmount = bill.getAmount().add(new BigDecimal("0.50"));
                     
                     if (acc.getBalance().compareTo(totalAmount) < 0) {
                         resultLabel.setText("Insufficient funds");
@@ -892,7 +909,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Account Statements");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -929,7 +946,7 @@ public class BankingGUI extends Application {
                 int idx = accountCombo.getSelectionModel().getSelectedIndex();
                 if (idx >= 0) {
                     PersonalAccount acc = accounts.get(idx);
-                    var transactions = bankSystem.getTransactionManager().getTransactionsForAccount(acc);
+                    List<Transaction> transactions = bankSystem.getTransactionManager().getTransactionsForAccount(acc);
                     table.getItems().clear();
                     table.getItems().addAll(transactions);
                 }
@@ -953,8 +970,8 @@ public class BankingGUI extends Application {
         Label title = new Label("Standing Orders");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var orders = bankSystem.getStandingOrderManager().getStandingOrdersForUser(user);
-        
+        List<StandingOrder> orders = bankSystem.getStandingOrderManager().getStandingOrdersForCustomer(user);
+
         if (orders.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any standing orders."));
         } else {
@@ -963,13 +980,34 @@ public class BankingGUI extends Application {
                 orderBox.setPadding(new Insets(10));
                 orderBox.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 5;");
                 
+                String amountStr = order.getAmount() != null ? String.format("€%.2f", order.getAmount()) : "Variable";
+                String nextExec = order.getNextExecutionDate() != null ? order.getNextExecutionDate().toString() : "N/A";
+                
                 orderBox.getChildren().addAll(
+                    new Label("ID: " + order.getId()),
                     new Label("Type: " + order.getType()),
-                    new Label(String.format("Amount: €%.2f", order.getAmount())),
+                    new Label("Amount: " + amountStr),
                     new Label("Frequency: Every " + order.getFrequencyMonths() + " month(s)"),
-                    new Label("Next Execution: " + order.getNextExecutionDate()),
+                    new Label("Next Execution: " + nextExec),
                     new Label("Status: " + order.getStatus())
                 );
+                
+                if (order.getType() == StandingOrder.OrderType.BILL_PAYMENT) {
+                    orderBox.getChildren().add(new Label("Provider: " + order.getProviderName()));
+                }
+                
+                // Cancel button
+                Button cancelBtn = new Button("Cancel");
+                cancelBtn.setStyle(STYLE_BUTTON_DANGER);
+                cancelBtn.setOnAction(e -> {
+                    order.setStatus(StandingOrder.OrderStatus.CANCELLED);
+                    bankSystem.saveToFile();
+                    showStandingOrders(content, user);
+                });
+                
+                if (order.getStatus() == StandingOrder.OrderStatus.ACTIVE) {
+                    orderBox.getChildren().add(cancelBtn);
+                }
                 
                 vbox.getChildren().add(orderBox);
             }
@@ -980,6 +1018,198 @@ public class BankingGUI extends Application {
         content.getChildren().add(scrollPane);
     }
     
+    /**
+     * Show create standing order form
+     */
+    private void showCreateStandingOrderForm(StackPane content, IndividualUser user) {
+        content.getChildren().clear();
+        
+        VBox vbox = new VBox(15);
+        vbox.setMaxWidth(450);
+        
+        Label title = new Label("Create Standing Order");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        // Type selection
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Transfer Standing Order", "Bill Payment Standing Order");
+        typeCombo.setPromptText("Select Type");
+        typeCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        // Container for dynamic content
+        VBox dynamicContent = new VBox(10);
+        
+        Label resultLabel = new Label();
+        
+        typeCombo.setOnAction(e -> {
+            dynamicContent.getChildren().clear();
+            
+            if (typeCombo.getSelectionModel().getSelectedIndex() == 0) {
+                // Transfer Standing Order
+                showTransferStandingOrderFields(dynamicContent, user, resultLabel);
+            } else if (typeCombo.getSelectionModel().getSelectedIndex() == 1) {
+                // Bill Payment Standing Order
+                showBillPaymentStandingOrderFields(dynamicContent, user, resultLabel);
+            }
+        });
+        
+        vbox.getChildren().addAll(title, new Label("Order Type:"), typeCombo, dynamicContent, resultLabel);
+        
+        ScrollPane scrollPane = new ScrollPane(vbox);
+        scrollPane.setFitToWidth(true);
+        content.getChildren().add(scrollPane);
+    }
+    
+    private void showTransferStandingOrderFields(VBox container, IndividualUser user, Label resultLabel) {
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        
+        if (accounts.isEmpty()) {
+            container.getChildren().add(new Label("You don't have any accounts."));
+            return;
+        }
+        
+        ComboBox<String> fromCombo = new ComboBox<>();
+        for (PersonalAccount acc : accounts) {
+            fromCombo.getItems().add(acc.getIban() + " (€" + String.format("%.2f", acc.getBalance()) + ")");
+        }
+        fromCombo.setPromptText("Source Account");
+        fromCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        TextField toIbanField = new TextField();
+        toIbanField.setPromptText("Destination IBAN");
+        
+        TextField amountField = new TextField();
+        amountField.setPromptText("Amount (EUR)");
+        
+        TextField dayField = new TextField();
+        dayField.setPromptText("Execution Day (1-28)");
+        
+        TextField descField = new TextField();
+        descField.setPromptText("Description");
+        
+        Button createBtn = new Button("Create Transfer Standing Order");
+        createBtn.setStyle(STYLE_BUTTON_SUCCESS);
+        
+        createBtn.setOnAction(e -> {
+            try {
+                int idx = fromCombo.getSelectionModel().getSelectedIndex();
+                if (idx < 0) {
+                    resultLabel.setText("Please select source account");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                String toIban = toIbanField.getText().trim();
+                Account toAcc = bankSystem.getAccountManager().findByIban(toIban);
+                if (toAcc == null) {
+                    resultLabel.setText("Destination account not found");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                double amount = Double.parseDouble(amountField.getText());
+                int day = Integer.parseInt(dayField.getText());
+                
+                if (day < 1 || day > 28) {
+                    resultLabel.setText("Execution day must be between 1 and 28");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                PersonalAccount fromAcc = accounts.get(idx);
+                
+                bankSystem.getStandingOrderManager().createTransferStandingOrder(
+                    fromAcc, toAcc, new BigDecimal(amount), 1, day, descField.getText(), user);
+                bankSystem.saveToFile();
+                
+                resultLabel.setText("Transfer standing order created successfully!");
+                resultLabel.setStyle("-fx-text-fill: green;");
+                
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Invalid number format");
+                resultLabel.setStyle("-fx-text-fill: red;");
+            } catch (Exception ex) {
+                resultLabel.setText(ex.getMessage());
+                resultLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+        
+        container.getChildren().addAll(
+            new Label("Source Account:"), fromCombo,
+            new Label("Destination IBAN:"), toIbanField,
+            new Label("Amount (EUR):"), amountField,
+            new Label("Execution Day (1-28):"), dayField,
+            new Label("Description:"), descField,
+            createBtn
+        );
+    }
+    
+    private void showBillPaymentStandingOrderFields(VBox container, IndividualUser user, Label resultLabel) {
+        List<PersonalAccount> accounts = bankSystem.getAccountManager().getAccountsForIndividualUser(user);
+        List<Bill> unpaidBills = bankSystem.getBillManager().getUnpaidBillsForUser(user);
+        
+        if (accounts.isEmpty()) {
+            container.getChildren().add(new Label("You don't have any accounts."));
+            return;
+        }
+        
+        if (unpaidBills.isEmpty()) {
+            container.getChildren().add(new Label("You don't have any unpaid bills to set up automatic payment."));
+            return;
+        }
+        
+        ComboBox<String> accountCombo = new ComboBox<>();
+        for (PersonalAccount acc : accounts) {
+            accountCombo.getItems().add(acc.getIban() + " (€" + String.format("%.2f", acc.getBalance()) + ")");
+        }
+        accountCombo.setPromptText("Source Account");
+        accountCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        ComboBox<String> billCombo = new ComboBox<>();
+        for (Bill bill : unpaidBills) {
+            billCombo.getItems().add(bill.getProviderName() + " - €" + String.format("%.2f", bill.getAmount()) + 
+                " - RF: " + bill.getRfCode());
+        }
+        billCombo.setPromptText("Select Bill");
+        billCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        Button createBtn = new Button("Create Bill Payment Standing Order");
+        createBtn.setStyle(STYLE_BUTTON_SUCCESS);
+        
+        createBtn.setOnAction(e -> {
+            try {
+                int accIdx = accountCombo.getSelectionModel().getSelectedIndex();
+                int billIdx = billCombo.getSelectionModel().getSelectedIndex();
+                
+                if (accIdx < 0 || billIdx < 0) {
+                    resultLabel.setText("Please select account and bill");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                PersonalAccount acc = accounts.get(accIdx);
+                Bill bill = unpaidBills.get(billIdx);
+                
+                bankSystem.getStandingOrderManager().createBillPaymentStandingOrder(acc, bill, user);
+                bankSystem.saveToFile();
+                
+                resultLabel.setText("Bill payment standing order created successfully!");
+                resultLabel.setStyle("-fx-text-fill: green;");
+                
+            } catch (Exception ex) {
+                resultLabel.setText(ex.getMessage());
+                resultLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+        
+        container.getChildren().addAll(
+            new Label("Source Account:"), accountCombo,
+            new Label("Bill to Pay Automatically:"), billCombo,
+            new Label("(Will execute monthly on day 15)"),
+            createBtn
+        );
+    }
+    
     // Business user methods
     private void showBusinessOverview(StackPane content, BusinessUser user) {
         content.getChildren().clear();
@@ -988,7 +1218,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Business Account Overview");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAccountsForBusinessUser(user);
+        List<BusinessAccount> accounts = bankSystem.getAccountManager().getAccountsForBusinessUser(user);
         
         if (accounts.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
@@ -1014,33 +1244,85 @@ public class BankingGUI extends Application {
     }
     
     private void showBusinessDeposit(StackPane content, BusinessUser user) {
-        // Similar to individual deposit
         content.getChildren().clear();
-        Label label = new Label("Business Deposit - Similar to Individual");
-        content.getChildren().add(label);
+        VBox vbox = new VBox(15);
+        vbox.setMaxWidth(400);
+        
+        Label title = new Label("Business Deposit");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        List<BusinessAccount> accounts = bankSystem.getAccountManager().getAccountsForBusinessUser(user);
+        
+        if (accounts.isEmpty()) {
+            vbox.getChildren().addAll(title, new Label("You don't have any accounts."));
+        } else {
+            ComboBox<String> accountCombo = new ComboBox<>();
+            for (BusinessAccount acc : accounts) {
+                accountCombo.getItems().add(acc.getIban() + " (€" + String.format("%.2f", acc.getBalance()) + ")");
+            }
+            accountCombo.setPromptText("Select Account");
+            accountCombo.setMaxWidth(Double.MAX_VALUE);
+            
+            TextField amountField = new TextField();
+            amountField.setPromptText("Amount (EUR)");
+            
+            Label resultLabel = new Label();
+            
+            Button depositBtn = new Button("Deposit");
+            depositBtn.setStyle(STYLE_BUTTON_SUCCESS);
+            
+            depositBtn.setOnAction(e -> {
+                try {
+                    int idx = accountCombo.getSelectionModel().getSelectedIndex();
+                    if (idx < 0) {
+                        resultLabel.setText("Please select an account");
+                        resultLabel.setStyle("-fx-text-fill: red;");
+                        return;
+                    }
+                    
+                    double amount = Double.parseDouble(amountField.getText());
+                    BusinessAccount acc = accounts.get(idx);
+                    bankSystem.getTransactionManager().deposit(acc, new BigDecimal(amount), "Business Deposit");
+                    bankSystem.saveToFile();
+                    
+                    resultLabel.setText(String.format("Successfully deposited €%.2f", amount));
+                    resultLabel.setStyle("-fx-text-fill: green;");
+                    amountField.clear();
+                    
+                } catch (NumberFormatException ex) {
+                    resultLabel.setText("Invalid amount");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                }
+            });
+            
+            vbox.getChildren().addAll(title, new Label("Account:"), accountCombo,
+                new Label("Amount:"), amountField, depositBtn, resultLabel);
+        }
+        
+        content.getChildren().add(vbox);
     }
     
     private void showBusinessWithdraw(StackPane content, BusinessUser user) {
         content.getChildren().clear();
-        Label label = new Label("Business Withdraw - Similar to Individual");
+        Label label = new Label("Business Withdraw - Implementation similar to deposit");
         content.getChildren().add(label);
     }
     
     private void showBusinessTransfer(StackPane content, BusinessUser user) {
         content.getChildren().clear();
-        Label label = new Label("Business Transfer - Similar to Individual");
+        Label label = new Label("Business Transfer - Implementation similar to individual");
         content.getChildren().add(label);
     }
     
     private void showBusinessSepa(StackPane content, BusinessUser user) {
         content.getChildren().clear();
-        Label label = new Label("Business SEPA - Similar to Individual");
+        Label label = new Label("Business SEPA - Implementation similar to individual");
         content.getChildren().add(label);
     }
     
     private void showBusinessSwift(StackPane content, BusinessUser user) {
         content.getChildren().clear();
-        Label label = new Label("Business SWIFT - Similar to Individual");
+        Label label = new Label("Business SWIFT - Implementation similar to individual");
         content.getChildren().add(label);
     }
     
@@ -1061,7 +1343,7 @@ public class BankingGUI extends Application {
         
         DatePicker dueDatePicker = new DatePicker();
         dueDatePicker.setPromptText("Due Date");
-        dueDatePicker.setValue(java.time.LocalDate.now().plusDays(30));
+        dueDatePicker.setValue(LocalDate.now().plusDays(30));
         
         Label resultLabel = new Label();
         
@@ -1080,11 +1362,11 @@ public class BankingGUI extends Application {
                 }
                 
                 double amount = Double.parseDouble(amountField.getText());
-                java.time.LocalDate dueDate = dueDatePicker.getValue();
+                LocalDate dueDate = dueDatePicker.getValue();
                 
                 bankSystem.getBillManager().createBill(
                     (IndividualUser) customer, user, user.getBusinessName(),
-                    new java.math.BigDecimal(amount), dueDate);
+                    new BigDecimal(amount), dueDate);
                 bankSystem.saveToFile();
                 
                 resultLabel.setText("Bill issued successfully!");
@@ -1115,7 +1397,7 @@ public class BankingGUI extends Application {
         Label title = new Label("Bills Issued by You");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var bills = bankSystem.getBillManager().getBillsIssuedByBusiness(user);
+        List<Bill> bills = bankSystem.getBillManager().getBillsIssuedByBusiness(user);
         
         if (bills.isEmpty()) {
             vbox.getChildren().addAll(title, new Label("You haven't issued any bills."));
@@ -1149,7 +1431,7 @@ public class BankingGUI extends Application {
     
     private void showBusinessStatements(StackPane content, BusinessUser user) {
         content.getChildren().clear();
-        Label label = new Label("Business Statements - Similar to Individual");
+        Label label = new Label("Business Statements - Implementation similar to individual");
         content.getChildren().add(label);
     }
     
@@ -1162,7 +1444,7 @@ public class BankingGUI extends Application {
         Label title = new Label("User Management");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var users = bankSystem.getUserManager().getAllUsers();
+        List<User> users = bankSystem.getUserManager().getAllUsers();
         
         TableView<User> table = new TableView<>();
         
@@ -1210,7 +1492,7 @@ public class BankingGUI extends Application {
         Label title = new Label("All Accounts");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var accounts = bankSystem.getAccountManager().getAllAccounts();
+        List<Account> accounts = bankSystem.getAccountManager().getAllAccounts();
         
         TableView<Account> table = new TableView<>();
         
@@ -1246,7 +1528,7 @@ public class BankingGUI extends Application {
         Label title = new Label("All Transactions");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var transactions = bankSystem.getTransactionManager().getAllTransactions();
+        List<Transaction> transactions = bankSystem.getTransactionManager().getAllTransactions();
         
         TableView<Transaction> table = new TableView<>();
         
@@ -1276,6 +1558,87 @@ public class BankingGUI extends Application {
         content.getChildren().add(vbox);
     }
     
+    private void showAllBills(StackPane content) {
+        content.getChildren().clear();
+        
+        VBox vbox = new VBox(15);
+        
+        Label title = new Label("All Bills");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        List<Bill> bills = bankSystem.getBillManager().getAllBills();
+        
+        TableView<Bill> table = new TableView<>();
+        
+        TableColumn<Bill, String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getId()));
+        
+        TableColumn<Bill, String> providerCol = new TableColumn<>("Provider");
+        providerCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getProviderName()));
+        
+        TableColumn<Bill, String> ownerCol = new TableColumn<>("Owner");
+        ownerCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getOwner().getUsername()));
+        
+        TableColumn<Bill, String> amountCol = new TableColumn<>("Amount");
+        amountCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            String.format("€%.2f", data.getValue().getAmount())));
+        
+        TableColumn<Bill, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus().toString()));
+        
+        table.getColumns().addAll(idCol, providerCol, ownerCol, amountCol, statusCol);
+        table.getItems().addAll(bills);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        vbox.getChildren().addAll(title, table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        
+        content.getChildren().add(vbox);
+    }
+    
+    private void showAllStandingOrders(StackPane content) {
+        content.getChildren().clear();
+        
+        VBox vbox = new VBox(15);
+        
+        Label title = new Label("All Standing Orders");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        List<StandingOrder> orders = bankSystem.getStandingOrderManager().getAllStandingOrders();
+        
+        TableView<StandingOrder> table = new TableView<>();
+        
+        TableColumn<StandingOrder, String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getId()));
+        
+        TableColumn<StandingOrder, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getType().toString()));
+        
+        TableColumn<StandingOrder, String> ownerCol = new TableColumn<>("Owner");
+        ownerCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getOwner() != null ? data.getValue().getOwner().getUsername() : "N/A"));
+        
+        TableColumn<StandingOrder, String> amountCol = new TableColumn<>("Amount");
+        amountCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getAmount() != null ? String.format("€%.2f", data.getValue().getAmount()) : "Variable"));
+        
+        TableColumn<StandingOrder, String> nextCol = new TableColumn<>("Next Execution");
+        nextCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getNextExecutionDate() != null ? data.getValue().getNextExecutionDate().toString() : "N/A"));
+        
+        TableColumn<StandingOrder, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus().toString()));
+        
+        table.getColumns().addAll(idCol, typeCol, ownerCol, amountCol, nextCol, statusCol);
+        table.getItems().addAll(orders);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        vbox.getChildren().addAll(title, table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        
+        content.getChildren().add(vbox);
+    }
+    
     private void showTimeSimulation(StackPane content) {
         content.getChildren().clear();
         
@@ -1287,16 +1650,22 @@ public class BankingGUI extends Application {
         
         Label currentDateLabel = new Label("Current System Date: " + bankSystem.getCurrentDate());
         
+        // Option 1: Simulate by days
         TextField daysField = new TextField();
         daysField.setPromptText("Number of days to simulate");
+        
+        // Option 2: Simulate to specific date
+        DatePicker targetDatePicker = new DatePicker();
+        targetDatePicker.setPromptText("Target Date");
+        targetDatePicker.setValue(bankSystem.getCurrentDate().plusMonths(1));
         
         Label resultLabel = new Label();
         resultLabel.setWrapText(true);
         
-        Button simulateBtn = new Button("Simulate Days");
-        simulateBtn.setStyle(STYLE_BUTTON);
+        Button simulateDaysBtn = new Button("Simulate Days");
+        simulateDaysBtn.setStyle(STYLE_BUTTON);
         
-        simulateBtn.setOnAction(e -> {
+        simulateDaysBtn.setOnAction(e -> {
             try {
                 int days = Integer.parseInt(daysField.getText());
                 if (days <= 0 || days > 365) {
@@ -1309,7 +1678,7 @@ public class BankingGUI extends Application {
                 bankSystem.saveToFile();
                 
                 currentDateLabel.setText("Current System Date: " + bankSystem.getCurrentDate());
-                resultLabel.setText("Simulated " + days + " days. Interest calculated, fees applied, standing orders executed.");
+                resultLabel.setText("Simulated " + days + " days. Standing orders executed.");
                 resultLabel.setStyle("-fx-text-fill: green;");
                 daysField.clear();
                 
@@ -1319,29 +1688,40 @@ public class BankingGUI extends Application {
             }
         });
         
-        Button advanceOneDay = new Button("Advance 1 Day");
-        advanceOneDay.setStyle(STYLE_BUTTON_SUCCESS);
-        advanceOneDay.setOnAction(e -> {
-            bankSystem.advanceDay();
+        Button simulateToDateBtn = new Button("Simulate to Date");
+        simulateToDateBtn.setStyle(STYLE_BUTTON);
+        
+        simulateToDateBtn.setOnAction(e -> {
+            LocalDate targetDate = targetDatePicker.getValue();
+            if (targetDate == null || !targetDate.isAfter(bankSystem.getCurrentDate())) {
+                resultLabel.setText("Please select a future date");
+                resultLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+            
+            bankSystem.simulateTimePassing(targetDate);
             bankSystem.saveToFile();
+            
             currentDateLabel.setText("Current System Date: " + bankSystem.getCurrentDate());
-            resultLabel.setText("Advanced 1 day to " + bankSystem.getCurrentDate());
+            resultLabel.setText("Simulated to " + targetDate + ". Standing orders executed.");
             resultLabel.setStyle("-fx-text-fill: green;");
         });
 
         Button resetBtn = new Button("Reset to Today");
-        // Orange color to distinguish it
         resetBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20;");
         resetBtn.setOnAction(e -> {
             bankSystem.resetSystemDate();
-            // Update the label immediately so you see the change
             currentDateLabel.setText("Current System Date: " + bankSystem.getCurrentDate());
             resultLabel.setText("System date reset to today.");
             resultLabel.setStyle("-fx-text-fill: green;");
         });
 
         vbox.getChildren().addAll(title, currentDateLabel, new Separator(),
-            new Label("Days to simulate:"), daysField, simulateBtn, advanceOneDay, resetBtn, resultLabel);
+            new Label("Option 1: Simulate by days"), daysField, simulateDaysBtn,
+            new Separator(),
+            new Label("Option 2: Simulate to specific date"), targetDatePicker, simulateToDateBtn,
+            new Separator(),
+            resetBtn, resultLabel);
         
         content.getChildren().add(vbox);
     }
@@ -1354,11 +1734,11 @@ public class BankingGUI extends Application {
         Label title = new Label("System Information");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         
-        var users = bankSystem.getUserManager().getAllUsers();
-        var accounts = bankSystem.getAccountManager().getAllAccounts();
-        var transactions = bankSystem.getTransactionManager().getAllTransactions();
-        var bills = bankSystem.getBillManager().getAllBills();
-        var standingOrders = bankSystem.getStandingOrderManager().getAllStandingOrders();
+        List<User> users = bankSystem.getUserManager().getAllUsers();
+        List<Account> accounts = bankSystem.getAccountManager().getAllAccounts();
+        List<Transaction> transactions = bankSystem.getTransactionManager().getAllTransactions();
+        List<Bill> bills = bankSystem.getBillManager().getAllBills();
+        List<StandingOrder> standingOrders = bankSystem.getStandingOrderManager().getAllStandingOrders();
         
         vbox.getChildren().addAll(title,
             new Label("System Date: " + bankSystem.getCurrentDate()),

@@ -44,12 +44,41 @@ public class StandingOrderManager {
     }
     
     /**
-     * Create a bill payment standing order
+     * Create a bill payment standing order from an existing bill
+     * This ensures the bill exists and captures the correct amount
      */
+    public StandingOrder createBillPaymentStandingOrder(Account sourceAccount, Bill bill, Customer owner) {
+        String id = "SO" + String.format("%06d", orderIdCounter.getAndIncrement());
+        StandingOrder order = new StandingOrder(id, sourceAccount, bill.getRfCode(), 
+                                                 bill.getProviderName(), owner);
+        // Set the amount from the bill
+        order.setAmount(bill.getAmount());
+        standingOrders.add(order);
+        return order;
+    }
+    
+    /**
+     * Create a bill payment standing order (legacy - for manual entry)
+     * @deprecated Use createBillPaymentStandingOrder(Account, Bill, Customer) instead
+     */
+    @Deprecated
     public StandingOrder createBillPaymentStandingOrder(Account sourceAccount, String rfCode,
                                                          String providerName, Customer owner) {
         String id = "SO" + String.format("%06d", orderIdCounter.getAndIncrement());
         StandingOrder order = new StandingOrder(id, sourceAccount, rfCode, providerName, owner);
+        standingOrders.add(order);
+        return order;
+    }
+    
+    /**
+     * Create a bill payment standing order with amount
+     */
+    public StandingOrder createBillPaymentStandingOrder(Account sourceAccount, String rfCode,
+                                                         String providerName, BigDecimal amount,
+                                                         Customer owner) {
+        String id = "SO" + String.format("%06d", orderIdCounter.getAndIncrement());
+        StandingOrder order = new StandingOrder(id, sourceAccount, rfCode, providerName, owner);
+        order.setAmount(amount);
         standingOrders.add(order);
         return order;
     }
@@ -61,19 +90,6 @@ public class StandingOrderManager {
         return standingOrders.stream()
             .filter(so -> so.getOwner().getId().equals(customer.getId()))
             .collect(Collectors.toList());
-    }
-
-    /**
-     * Get standing orders for a User (delegates to getStandingOrdersForCustomer).
-     * Added for GUI compatibility.
-     */
-    public List<StandingOrder> getStandingOrdersForUser(User user) {
-        // Check if the user is a Customer (IndividualUser and BusinessUser should be Customers)
-        if (user instanceof Customer) {
-            return getStandingOrdersForCustomer((Customer) user);
-        }
-        // If the user isn't a customer (e.g. Admin), return empty list
-        return new ArrayList<>();
     }
     
     /**
@@ -104,6 +120,17 @@ public class StandingOrderManager {
         return standingOrders.stream()
             .filter(so -> so.getType() == OrderType.BILL_PAYMENT)
             .filter(so -> so.getStatus() == OrderStatus.ACTIVE)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get due bill payment standing orders for a given date
+     */
+    public List<StandingOrder> getDueBillPaymentOrders(LocalDate currentDate) {
+        return standingOrders.stream()
+            .filter(so -> so.getType() == OrderType.BILL_PAYMENT)
+            .filter(so -> so.getStatus() == OrderStatus.ACTIVE)
+            .filter(so -> so.shouldExecute(currentDate))
             .collect(Collectors.toList());
     }
     
@@ -168,6 +195,10 @@ public class StandingOrderManager {
                         "Standing Order: " + order.getDescription());
                     order.recordExecution();
                     executedOrders.add(order);
+                    System.out.println("[OK] Executed transfer standing order " + order.getId() + 
+                                       " - " + amount + " EUR");
+                } else {
+                    System.out.println("[WARN] Insufficient funds for standing order " + order.getId());
                 }
             } catch (Exception e) {
                 System.err.println("Failed to execute standing order " + order.getId() + ": " + e.getMessage());
@@ -175,22 +206,66 @@ public class StandingOrderManager {
         }
         
         // Execute bill payment standing orders
-        for (StandingOrder order : getActiveBillPaymentOrders()) {
+        for (StandingOrder order : getDueBillPaymentOrders(currentDate)) {
             try {
+                // First try to find bill by RF code
                 List<Bill> matchingBills = billManager.findUnpaidByRfCode(order.getRfCode());
+                
+                // If no bills found by RF code, try by provider name for the order owner
                 if (matchingBills.isEmpty()) {
-                    matchingBills = billManager.findUnpaidByProvider(order.getProviderName());
+                    List<Bill> providerBills = billManager.findUnpaidByProvider(order.getProviderName());
+                    // Filter to only bills belonging to the order owner
+                    for (Bill bill : providerBills) {
+                        if (bill.getOwner().getId().equals(order.getOwner().getId())) {
+                            matchingBills.add(bill);
+                        }
+                    }
                 }
                 
-                for (Bill bill : matchingBills) {
-                    Account source = order.getSourceAccount();
-                    if (source.getBalance().compareTo(bill.getAmount()) >= 0) {
-                        source.withdraw(bill.getAmount());
-                        bill.markAsPaid(currentDate.atStartOfDay());
+                if (matchingBills.isEmpty()) {
+                    // No unpaid bills found - use the standing order amount if set
+                    BigDecimal amount = order.getAmount();
+                    if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        Account source = order.getSourceAccount();
+                        if (source.getBalance().compareTo(amount) >= 0) {
+                            // Create a bill payment transaction without an actual bill
+                            transactionManager.recordBillPayment(source, amount, 
+                                "Auto-pay " + order.getProviderName() + " (Standing Order)");
+                            order.recordExecution();
+                            executedOrders.add(order);
+                            System.out.println("[OK] Executed bill payment standing order " + order.getId() + 
+                                               " - " + amount + " EUR to " + order.getProviderName());
+                        } else {
+                            System.out.println("[WARN] Insufficient funds for bill payment order " + order.getId());
+                        }
+                    } else {
+                        System.out.println("[INFO] No unpaid bills found for standing order " + order.getId() + 
+                                           " (Provider: " + order.getProviderName() + ", RF: " + order.getRfCode() + ")");
+                    }
+                } else {
+                    // Pay all matching unpaid bills
+                    for (Bill bill : matchingBills) {
+                        Account source = order.getSourceAccount();
+                        BigDecimal amount = bill.getAmount();
                         
-                        transactionManager.deposit(source, bill.getAmount().negate(), 
-                            "Bill payment: " + bill.getProviderName());
-                        executedOrders.add(order);
+                        if (source.getBalance().compareTo(amount) >= 0) {
+                            // Withdraw from source account
+                            source.withdraw(amount);
+                            
+                            // Mark bill as paid
+                            bill.markAsPaid(currentDate.atStartOfDay());
+                            
+                            // Record the transaction properly
+                            transactionManager.recordBillPayment(source, amount, 
+                                "Bill payment: " + bill.getProviderName() + " (RF: " + bill.getRfCode() + ")");
+                            
+                            order.recordExecution();
+                            executedOrders.add(order);
+                            System.out.println("[OK] Paid bill " + bill.getId() + " - " + amount + 
+                                               " EUR to " + bill.getProviderName());
+                        } else {
+                            System.out.println("[WARN] Insufficient funds to pay bill " + bill.getId());
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -213,5 +288,12 @@ public class StandingOrderManager {
      */
     public List<StandingOrder> getStandingOrders() {
         return standingOrders;
+    }
+    
+    /**
+     * Set the order ID counter (used when loading from persistence)
+     */
+    public void setOrderIdCounter(int counter) {
+        this.orderIdCounter.set(counter);
     }
 }

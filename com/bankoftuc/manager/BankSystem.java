@@ -73,8 +73,15 @@ public class BankSystem {
         this.authManager = new AuthManager(users);
     }
     
+// =====================================================
+// PATCH FOR BankSystem.java - Replace initDemoData() method
+// =====================================================
+// Find the method: public void initDemoData() { ... }
+// Replace the ENTIRE method with the code below
+// =====================================================
+
     /**
-     * Initialize demo data for testing
+     * Initialize demo data with professor's sample users and rich dataset
      */
     public void initDemoData() {
         if (!users.isEmpty()) {
@@ -82,67 +89,229 @@ public class BankSystem {
             return;
         }
         
-        System.out.println("Initializing demo data...");
+        System.out.println("Initializing demo data with professor's sample...");
         
-        // Create admin user
-        AdminUser admin = userManager.registerAdminUser("admin", "admin123", "6900000000", 1);
+        // ==================== ADMIN USERS ====================
+        AdminUser admin = userManager.registerAdminUser("admin", "pass123", "6900000000", 1);
+        AdminUser sysadmin = userManager.registerAdminUser("sysadmin", "pass123", "6900000001", 1);
         
-        // Create individual users
-        IndividualUser john = userManager.registerIndividualUser(
-            "john", "pass123", "John Smith", "123 Main St, Athens", "6901234567", "123456789");
-        IndividualUser maria = userManager.registerIndividualUser(
-            "maria", "pass123", "Maria Papadopoulou", "456 Oak Ave, Thessaloniki", "6902345678", "987654321");
-        IndividualUser nikos = userManager.registerIndividualUser(
-            "nikos", "pass123", "Nikos Georgiou", "789 Pine Rd, Patras", "6903456789", "456789123");
+        // ==================== INDIVIDUAL USERS (Professor's sample) ====================
+        IndividualUser ngioldasis = userManager.registerIndividualUser(
+            "ngioldasis", "pass123", "ΝΕΚΤΑΡΙΟΣ ΓΙΟΛΔΑΣΗΣ", 
+            "Λεωφ. Βουλιαγμένης 192, Ιωάννινα", "6901000001", "067688302");
+        IndividualUser pappas = userManager.registerIndividualUser(
+            "pappas", "pass123", "ΝΙΚΟΣ ΠΑΠΠΑΣ", 
+            "Λεωφ. Βουλιαγμένης 125, Βόλος", "6901000002", "067688303");
+        IndividualUser gchalkiadakis = userManager.registerIndividualUser(
+            "gchalkiadakis", "pass123", "ΓΙΩΡΓΟΣ ΧΑΛΚΙΑΔΑΚΗΣ", 
+            "Λεωφ. Αλεξάνδρας 183, Θεσσαλονίκη", "6901000003", "067688304");
+        IndividualUser mteranova = userManager.registerIndividualUser(
+            "mteranova", "pass123", "ΜΑΡΙΑ ΤΕΡΑΝΟΒΑ", 
+            "Λεωφ. Κηφισίας 132, Ηράκλειο", "6901000004", "067688305");
+        IndividualUser skarakosta = userManager.registerIndividualUser(
+            "skarakosta", "pass123", "ΣΟΦΙΑ ΚΑΡΑΚΩΣΤΑ", 
+            "Λεωφ. Βουλιαγμένης 94, Βόλος", "6901000005", "067688306");
+        IndividualUser edimitriou = userManager.registerIndividualUser(
+            "edimitriou", "pass123", "ΕΛΕΝΗ ΔΗΜΗΤΡΙΟΥ", 
+            "Οδός Ακαδημίας 70, Χανιά", "6901000006", "067688307");
         
-        // Create business users
-        BusinessUser techCorp = userManager.registerBusinessUser(
-            "techcorp", "pass123", "TechCorp Solutions", "6904567890", "EL123456789");
-        BusinessUser utilityCompany = userManager.registerBusinessUser(
-            "utility", "pass123", "Greek Utilities Co", "6905678901", "EL987654321");
+        // Additional individual users
+        IndividualUser kpapadopoulos = userManager.registerIndividualUser(
+            "kpapadopoulos", "pass123", "ΚΩΣΤΑΣ ΠΑΠΑΔΟΠΟΥΛΟΣ", 
+            "Λεωφ. Αλεξάνδρας 124, Ηράκλειο", "6901000007", "067688308");
+        IndividualUser anikolaou = userManager.registerIndividualUser(
+            "anikolaou", "pass123", "ΑΝΝΑ ΝΙΚΟΛΑΟΥ", 
+            "Οδός Πατησίων 52, Ιωάννινα", "6901000008", "067688309");
+        IndividualUser dathanasiou = userManager.registerIndividualUser(
+            "dathanasiou", "pass123", "ΔΗΜΗΤΡΗΣ ΑΘΑΝΑΣΙΟΥ", 
+            "Οδός Ακαδημίας 3, Ιωάννινα", "6901000009", "067688310");
+        IndividualUser ikonstantinou = userManager.registerIndividualUser(
+            "ikonstantinou", "pass123", "ΙΩΑΝΝΑ ΚΩΝΣΤΑΝΤΙΝΟΥ", 
+            "Οδός Ακαδημίας 76, Χανιά", "6901000010", "067688311");
+        IndividualUser pgeorgiou = userManager.registerIndividualUser(
+            "pgeorgiou", "pass123", "ΠΕΤΡΟΣ ΓΕΩΡΓΙΟΥ", 
+            "Οδός Ακαδημίας 129, Αθήνα", "6901000011", "067688312");
+        IndividualUser cvasileiou = userManager.registerIndividualUser(
+            "cvasileiou", "pass123", "ΧΡΙΣΤΙΝΑ ΒΑΣΙΛΕΙΟΥ", 
+            "Οδός Ακαδημίας 184, Θεσσαλονίκη", "6901000012", "067688313");
+        IndividualUser amichail = userManager.registerIndividualUser(
+            "amichail", "pass123", "ΑΛΕΞΑΝΔΡΟΣ ΜΙΧΑΗΛ", 
+            "Λεωφ. Κηφισίας 179, Αθήνα", "6901000013", "067688314");
+        IndividualUser kstavrou = userManager.registerIndividualUser(
+            "kstavrou", "pass123", "ΚΑΤΕΡΙΝΑ ΣΤΑΥΡΟΥ", 
+            "Οδός Σταδίου 197, Ηράκλειο", "6901000014", "067688315");
+        IndividualUser tpantelis = userManager.registerIndividualUser(
+            "tpantelis", "pass123", "ΘΑΝΑΣΗΣ ΠΑΝΤΕΛΗΣ", 
+            "Οδός Πατησίων 132, Ηράκλειο", "6901000015", "067688316");
+        IndividualUser mlouka = userManager.registerIndividualUser(
+            "mlouka", "pass123", "ΜΑΡΙΑΝΝΑ ΛΟΥΚΑ", 
+            "Λεωφ. Βουλιαγμένης 124, Λάρισα", "6901000016", "067688317");
+        IndividualUser santoniou = userManager.registerIndividualUser(
+            "santoniou", "pass123", "ΣΤΕΛΙΟΣ ΑΝΤΩΝΙΟΥ", 
+            "Οδός Πατησίων 116, Βόλος", "6901000017", "067688318");
+        IndividualUser vchristou = userManager.registerIndividualUser(
+            "vchristou", "pass123", "ΒΑΣΙΛΙΚΗ ΧΡΙΣΤΟΥ", 
+            "Λεωφ. Αλεξάνδρας 125, Πάτρα", "6901000018", "067688319");
         
-        // Create accounts
-        PersonalAccount johnAccount1 = accountManager.createPersonalAccount(john, new BigDecimal("5000.00"));
-        PersonalAccount johnAccount2 = accountManager.createPersonalAccount(john, new BigDecimal("2500.00"));
-        PersonalAccount mariaAccount = accountManager.createPersonalAccount(maria, new BigDecimal("3500.00"));
-        PersonalAccount nikosAccount = accountManager.createPersonalAccount(nikos, new BigDecimal("1500.00"));
+        // ==================== BUSINESS USERS (Utility providers) ====================
+        BusinessUser vodafone = userManager.registerBusinessUser(
+            "vodafone", "pass123", "VODAFONE GR", "6902000001", "090800700");
+        BusinessUser cosmote = userManager.registerBusinessUser(
+            "cosmote", "pass123", "COSMOTE", "6902000002", "090800800");
+        BusinessUser dei = userManager.registerBusinessUser(
+            "dei", "pass123", "ΔΕΗ", "6902000003", "090800900");
+        BusinessUser nova = userManager.registerBusinessUser(
+            "nova", "pass123", "NOVA", "6902000004", "090800600");
+        BusinessUser ote = userManager.registerBusinessUser(
+            "ote", "pass123", "OTE", "6902000005", "090800500");
+        BusinessUser wind = userManager.registerBusinessUser(
+            "wind", "pass123", "WIND", "6902000006", "090800400");
+        BusinessUser eydap = userManager.registerBusinessUser(
+            "eydap", "pass123", "ΕΥΔΑΠ", "6902000007", "090800300");
+        BusinessUser deddie = userManager.registerBusinessUser(
+            "deddie", "pass123", "ΔΕΔΔΗΕ", "6902000008", "090800200");
         
-        // Add Maria as co-owner to John's second account
-        johnAccount2.addSecondaryOwner(maria);
+        // ==================== PERSONAL ACCOUNTS ====================
+        // Each individual gets 1-2 accounts with realistic balances
+        PersonalAccount acc01 = accountManager.createPersonalAccount(ngioldasis, new BigDecimal("4567.89"));
+        PersonalAccount acc02 = accountManager.createPersonalAccount(ngioldasis, new BigDecimal("12050.00"));
+        PersonalAccount acc03 = accountManager.createPersonalAccount(pappas, new BigDecimal("3421.56"));
+        PersonalAccount acc04 = accountManager.createPersonalAccount(pappas, new BigDecimal("8932.11"));
+        PersonalAccount acc05 = accountManager.createPersonalAccount(gchalkiadakis, new BigDecimal("2156.78"));
+        PersonalAccount acc06 = accountManager.createPersonalAccount(gchalkiadakis, new BigDecimal("15678.90"));
+        PersonalAccount acc07 = accountManager.createPersonalAccount(mteranova, new BigDecimal("6789.23"));
+        PersonalAccount acc08 = accountManager.createPersonalAccount(skarakosta, new BigDecimal("1234.56"));
+        PersonalAccount acc09 = accountManager.createPersonalAccount(skarakosta, new BigDecimal("9876.54"));
+        PersonalAccount acc10 = accountManager.createPersonalAccount(edimitriou, new BigDecimal("4321.09"));
+        PersonalAccount acc11 = accountManager.createPersonalAccount(kpapadopoulos, new BigDecimal("7654.32"));
+        PersonalAccount acc12 = accountManager.createPersonalAccount(anikolaou, new BigDecimal("2345.67"));
+        PersonalAccount acc13 = accountManager.createPersonalAccount(dathanasiou, new BigDecimal("8765.43"));
+        PersonalAccount acc14 = accountManager.createPersonalAccount(ikonstantinou, new BigDecimal("3456.78"));
+        PersonalAccount acc15 = accountManager.createPersonalAccount(pgeorgiou, new BigDecimal("6543.21"));
+        PersonalAccount acc16 = accountManager.createPersonalAccount(cvasileiou, new BigDecimal("4567.89"));
+        PersonalAccount acc17 = accountManager.createPersonalAccount(amichail, new BigDecimal("9012.34"));
+        PersonalAccount acc18 = accountManager.createPersonalAccount(kstavrou, new BigDecimal("1098.76"));
+        PersonalAccount acc19 = accountManager.createPersonalAccount(tpantelis, new BigDecimal("5432.10"));
+        PersonalAccount acc20 = accountManager.createPersonalAccount(mlouka, new BigDecimal("7890.12"));
+        PersonalAccount acc21 = accountManager.createPersonalAccount(santoniou, new BigDecimal("2109.87"));
+        PersonalAccount acc22 = accountManager.createPersonalAccount(vchristou, new BigDecimal("6789.01"));
         
-        BusinessAccount techCorpAccount = accountManager.createBusinessAccount(techCorp, new BigDecimal("50000.00"));
-        BusinessAccount utilityAccount = accountManager.createBusinessAccount(utilityCompany, new BigDecimal("100000.00"));
+        // ==================== BUSINESS ACCOUNTS ====================
+        BusinessAccount vodafoneAcc = accountManager.createBusinessAccount(vodafone, new BigDecimal("500000.00"));
+        BusinessAccount cosmoteAcc = accountManager.createBusinessAccount(cosmote, new BigDecimal("750000.00"));
+        BusinessAccount deiAcc = accountManager.createBusinessAccount(dei, new BigDecimal("1000000.00"));
+        BusinessAccount novaAcc = accountManager.createBusinessAccount(nova, new BigDecimal("350000.00"));
+        BusinessAccount oteAcc = accountManager.createBusinessAccount(ote, new BigDecimal("600000.00"));
+        BusinessAccount windAcc = accountManager.createBusinessAccount(wind, new BigDecimal("400000.00"));
+        BusinessAccount eydapAcc = accountManager.createBusinessAccount(eydap, new BigDecimal("800000.00"));
+        BusinessAccount deddieAcc = accountManager.createBusinessAccount(deddie, new BigDecimal("900000.00"));
         
-        // Create some bills
-        billManager.createBill(john, utilityCompany, "Greek Utilities Co", 
-            new BigDecimal("85.50"), currentDate.plusDays(15), "RF00001234");
-        billManager.createBill(john, techCorp, "TechCorp Solutions", 
-            new BigDecimal("199.99"), currentDate.plusDays(30), "RF00001235");
-        billManager.createBill(maria, utilityCompany, "Greek Utilities Co", 
-            new BigDecimal("72.30"), currentDate.plusDays(20), "RF00001236");
-        billManager.createBill(nikos, utilityCompany, "Greek Utilities Co", 
-            new BigDecimal("95.00"), currentDate.plusDays(10), "RF00001237");
+        // ==================== CO-OWNERS ====================
+        acc02.addSecondaryOwner(pappas);  // pappas co-owner on ngioldasis account
+        acc06.addSecondaryOwner(mteranova);  // mteranova co-owner on gchalkiadakis account
+        acc09.addSecondaryOwner(edimitriou);  // edimitriou co-owner on skarakosta account
         
-        // Create some transactions
-        transactionManager.deposit(johnAccount1, new BigDecimal("1000.00"), "Initial deposit");
-        transactionManager.transfer(johnAccount1, mariaAccount, new BigDecimal("250.00"), "Birthday gift");
-        transactionManager.withdraw(mariaAccount, new BigDecimal("100.00"), "ATM withdrawal");
+        // ==================== BILLS ====================
+        // Create bills from various providers to individuals
+        // Due dates in 2026, some paid, some unpaid
         
-        // Create a standing order
+        // VODAFONE bills
+        billManager.createBill(pappas, vodafone, "VODAFONE GR", new BigDecimal("46.98"), currentDate.plusDays(47));
+        billManager.createBill(gchalkiadakis, vodafone, "VODAFONE GR", new BigDecimal("38.68"), currentDate.plusDays(47));
+        billManager.createBill(skarakosta, vodafone, "VODAFONE GR", new BigDecimal("73.57"), currentDate.plusDays(73));
+        billManager.createBill(anikolaou, vodafone, "VODAFONE GR", new BigDecimal("68.30"), currentDate.plusDays(44));
+        billManager.createBill(amichail, vodafone, "VODAFONE GR", new BigDecimal("28.09"), currentDate.plusDays(79));
+        billManager.createBill(vchristou, vodafone, "VODAFONE GR", new BigDecimal("69.48"), currentDate.plusDays(12));
+        
+        // COSMOTE bills
+        billManager.createBill(pappas, cosmote, "COSMOTE", new BigDecimal("36.25"), currentDate.plusDays(79));
+        billManager.createBill(mteranova, cosmote, "COSMOTE", new BigDecimal("54.89"), currentDate.plusDays(56));
+        billManager.createBill(kpapadopoulos, cosmote, "COSMOTE", new BigDecimal("89.41"), currentDate.plusDays(23));
+        billManager.createBill(dathanasiou, cosmote, "COSMOTE", new BigDecimal("42.15"), currentDate.plusDays(67));
+        
+        // ΔΕΗ bills
+        billManager.createBill(pappas, dei, "ΔΕΗ", new BigDecimal("85.71"), currentDate.plusDays(51));
+        billManager.createBill(ngioldasis, dei, "ΔΕΗ", new BigDecimal("126.94"), currentDate.plusDays(38));
+        billManager.createBill(gchalkiadakis, dei, "ΔΕΗ", new BigDecimal("153.75"), currentDate.plusDays(62));
+        billManager.createBill(skarakosta, dei, "ΔΕΗ", new BigDecimal("98.50"), currentDate.plusDays(19));
+        billManager.createBill(mteranova, dei, "ΔΕΗ", new BigDecimal("112.30"), currentDate.plusDays(45));
+        
+        // NOVA bills
+        billManager.createBill(pappas, nova, "NOVA", new BigDecimal("48.22"), currentDate.plusDays(39));
+        billManager.createBill(gchalkiadakis, nova, "NOVA", new BigDecimal("23.10"), currentDate.plusDays(55));
+        billManager.createBill(edimitriou, nova, "NOVA", new BigDecimal("35.90"), currentDate.plusDays(28));
+        
+        // OTE bills
+        billManager.createBill(pappas, ote, "OTE", new BigDecimal("65.21"), currentDate.plusDays(38));
+        billManager.createBill(ikonstantinou, ote, "OTE", new BigDecimal("48.75"), currentDate.plusDays(71));
+        
+        // WIND bills
+        billManager.createBill(pappas, wind, "WIND", new BigDecimal("21.75"), currentDate.plusDays(24));
+        billManager.createBill(pgeorgiou, wind, "WIND", new BigDecimal("33.40"), currentDate.plusDays(52));
+        
+        // ΕΥΔΑΠ bills
+        billManager.createBill(pappas, eydap, "ΕΥΔΑΠ", new BigDecimal("70.70"), currentDate.plusDays(22));
+        billManager.createBill(cvasileiou, eydap, "ΕΥΔΑΠ", new BigDecimal("58.90"), currentDate.plusDays(41));
+        
+        // ΔΕΔΔΗΕ bills
+        billManager.createBill(gchalkiadakis, deddie, "ΔΕΔΔΗΕ", new BigDecimal("84.22"), currentDate.plusDays(33));
+        billManager.createBill(kstavrou, deddie, "ΔΕΔΔΗΕ", new BigDecimal("76.50"), currentDate.plusDays(59));
+        
+        // ==================== STANDING ORDERS (Transfers only) ====================
         standingOrderManager.createTransferStandingOrder(
-            johnAccount1, mariaAccount, new BigDecimal("100.00"), 
-            1, 15, "Monthly allowance", john);
+            acc01, acc03, new BigDecimal("100.00"), 1, 5, "Monthly allowance", ngioldasis);
+        standingOrderManager.createTransferStandingOrder(
+            acc05, acc07, new BigDecimal("250.00"), 1, 3, "Rent payment", gchalkiadakis);
+        standingOrderManager.createTransferStandingOrder(
+            acc11, acc12, new BigDecimal("50.00"), 1, 28, "Shared expenses", kpapadopoulos);
+        standingOrderManager.createTransferStandingOrder(
+            acc13, acc14, new BigDecimal("75.00"), 1, 21, "Gym membership share", dathanasiou);
+        standingOrderManager.createTransferStandingOrder(
+            acc15, acc16, new BigDecimal("200.00"), 1, 6, "Loan repayment", pgeorgiou);
+        standingOrderManager.createTransferStandingOrder(
+            acc17, acc19, new BigDecimal("150.00"), 1, 9, "Monthly contribution", amichail);
+        
+        // ==================== SAMPLE TRANSACTIONS ====================
+        // Some deposits
+        transactionManager.deposit(acc01, new BigDecimal("500.00"), "Salary deposit");
+        transactionManager.deposit(acc03, new BigDecimal("1200.00"), "Freelance payment");
+        transactionManager.deposit(acc05, new BigDecimal("800.00"), "Bonus");
+        transactionManager.deposit(acc07, new BigDecimal("350.00"), "Gift");
+        
+        // Some transfers
+        transactionManager.transfer(acc01, acc03, new BigDecimal("150.00"), "Birthday gift");
+        transactionManager.transfer(acc05, acc07, new BigDecimal("200.00"), "Shared dinner");
+        transactionManager.transfer(acc11, acc13, new BigDecimal("75.00"), "Concert tickets");
+        
+        // Some withdrawals
+        transactionManager.withdraw(acc03, new BigDecimal("100.00"), "ATM withdrawal");
+        transactionManager.withdraw(acc07, new BigDecimal("50.00"), "ATM withdrawal");
+        transactionManager.withdraw(acc15, new BigDecimal("200.00"), "Cash withdrawal");
         
         saveToCSV();
         System.out.println("Demo data initialized successfully!");
-        System.out.println("\nDemo Users:");
-        System.out.println("  Admin: username=admin, password=admin123");
-        System.out.println("  Individual: username=john, password=pass123");
-        System.out.println("  Individual: username=maria, password=pass123");
-        System.out.println("  Individual: username=nikos, password=pass123");
-        System.out.println("  Business: username=techcorp, password=pass123");
-        System.out.println("  Business: username=utility, password=pass123");
+        System.out.println("\n========================================");
+        System.out.println("  Demo Users (password: pass123)");
+        System.out.println("========================================");
+        System.out.println("  ADMINS:");
+        System.out.println("    admin, sysadmin");
+        System.out.println("  INDIVIDUALS (Professor's sample):");
+        System.out.println("    ngioldasis, pappas, gchalkiadakis");
+        System.out.println("    mteranova, skarakosta, edimitriou");
+        System.out.println("  INDIVIDUALS (Additional):");
+        System.out.println("    kpapadopoulos, anikolaou, dathanasiou");
+        System.out.println("    ikonstantinou, pgeorgiou, cvasileiou");
+        System.out.println("    amichail, kstavrou, tpantelis");
+        System.out.println("    mlouka, santoniou, vchristou");
+        System.out.println("  BUSINESSES:");
+        System.out.println("    vodafone, cosmote, dei, nova");
+        System.out.println("    ote, wind, eydap, deddie");
+        System.out.println("========================================");
     }
+
+// =====================================================
+// END OF PATCH
+// =====================================================
 
     /**
      * Advance the system date by exactly one day.

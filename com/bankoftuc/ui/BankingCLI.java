@@ -633,6 +633,11 @@ public class BankingCLI {
         ui.waitForEnter();
     }
     
+// =====================================================
+// PATCH FOR BankingCLI.java
+// =====================================================
+// push it to github reminder
+
     private void createBillPaymentStandingOrder(Customer user) {
         List<Account> accounts = bankSystem.getAccountManager().getAccountsForCustomer(user);
         
@@ -642,25 +647,84 @@ public class BankingCLI {
             return;
         }
         
+        // Check if user is IndividualUser (only individuals have bills)
+        if (!(user instanceof IndividualUser)) {
+            ui.printError("Only individual users can create bill payment standing orders.");
+            ui.waitForEnter();
+            return;
+        }
+        
+        IndividualUser individualUser = (IndividualUser) user;
+        
+        // Get unpaid bills for this user
+        List<Bill> unpaidBills = bankSystem.getBillManager().getUnpaidBillsForUser(individualUser);
+        
+        if (unpaidBills.isEmpty()) {
+            ui.printInfo("You don't have any unpaid bills to set up for automatic payment.");
+            ui.printInfo("Bills must be issued by a business before you can create a standing order.");
+            ui.waitForEnter();
+            return;
+        }
+        
         ui.printSubHeader("Create Bill Payment Standing Order");
         
-        ui.printInfo("Select source account:");
+        // Show unpaid bills
+        ui.printInfo("Select a bill to set up for automatic payment:");
+        ui.printSeparator();
+        for (int i = 0; i < unpaidBills.size(); i++) {
+            Bill bill = unpaidBills.get(i);
+            System.out.printf("[%d] %s - %.2f EUR - Due: %s - RF: %s%n", 
+                i + 1, 
+                bill.getProviderName(), 
+                bill.getAmount(),
+                bill.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                bill.getRfCode());
+        }
+        ui.printSeparator();
+        
+        int billChoice = ui.readIntInRange("Select bill (0 to cancel)", 0, unpaidBills.size());
+        if (billChoice == 0) return;
+        
+        Bill selectedBill = unpaidBills.get(billChoice - 1);
+        
+        // Select source account
+        ui.printBlank();
+        ui.printInfo("Select source account for automatic payments:");
         Account sourceAccount = selectAccountGeneric(accounts);
         if (sourceAccount == null) return;
         
-        String rfCode = ui.readString("Enter RF code to match");
-        String provider = ui.readString("Enter provider name");
+        // Confirm creation
+        ui.printBlank();
+        ui.printInfo("Standing Order Details:");
+        System.out.println("  Provider: " + selectedBill.getProviderName());
+        System.out.println("  RF Code: " + selectedBill.getRfCode());
+        System.out.printf("  Amount: %.2f EUR%n", selectedBill.getAmount());
+        System.out.println("  From Account: " + sourceAccount.getIban());
+        System.out.println("  Frequency: Monthly");
+        ui.printBlank();
+        
+        if (!ui.readYesNo("Create this standing order?")) {
+            ui.printInfo("Cancelled.");
+            ui.waitForEnter();
+            return;
+        }
         
         try {
+            // Use the new method that takes a Bill object
             bankSystem.getStandingOrderManager().createBillPaymentStandingOrder(
-                sourceAccount, rfCode, provider, user);
+                sourceAccount, selectedBill, user);
             bankSystem.saveToFile();
             ui.printSuccess("Bill payment standing order created successfully!");
+            ui.printInfo("Future bills from " + selectedBill.getProviderName() + " will be paid automatically.");
         } catch (Exception e) {
             ui.printError(e.getMessage());
         }
         ui.waitForEnter();
     }
+
+// =====================================================
+// END OF PATCH
+// =====================================================
     
     private void cancelStandingOrder(Customer user) {
         List<StandingOrder> orders = bankSystem.getStandingOrderManager().getStandingOrdersForCustomer(user);
