@@ -42,12 +42,16 @@ public class StandingOrder implements Serializable {
     private LocalDateTime createdAt;
     private Customer owner;  // The customer who created this standing order
     
+    // ==================== CONSTRUCTORS WITH systemDate PARAMETER ====================
+    // Use these when creating standing orders during time simulation
+    
     /**
      * Constructor for Transfer Standing Order
+     * @param systemDate The current system date (use BankSystem.getCurrentDate())
      */
     public StandingOrder(String id, Account sourceAccount, Account destinationAccount,
                          BigDecimal amount, int frequencyMonths, int executionDay,
-                         String description, Customer owner) {
+                         String description, Customer owner, LocalDate systemDate) {
         this.id = id;
         this.sourceAccount = sourceAccount;
         this.destinationAccount = destinationAccount;
@@ -59,14 +63,16 @@ public class StandingOrder implements Serializable {
         this.status = OrderStatus.ACTIVE;
         this.createdAt = LocalDateTime.now();
         this.owner = owner;
-        calculateNextExecutionDate(LocalDate.now());
+        calculateNextExecutionDate(systemDate);
     }
     
     /**
      * Constructor for Bill Payment Standing Order
+     * Default: Monthly execution on day 15
+     * @param systemDate The current system date (use BankSystem.getCurrentDate())
      */
     public StandingOrder(String id, Account sourceAccount, String rfCode,
-                         String providerName, Customer owner) {
+                         String providerName, Customer owner, LocalDate systemDate) {
         this.id = id;
         this.sourceAccount = sourceAccount;
         this.rfCode = rfCode;
@@ -76,21 +82,85 @@ public class StandingOrder implements Serializable {
         this.createdAt = LocalDateTime.now();
         this.owner = owner;
         this.description = "Auto-pay bills from " + providerName;
+        
+        // Default: Monthly on day 15
+        this.frequencyMonths = 1;
+        this.executionDay = 15;
+        calculateNextExecutionDate(systemDate);
+    }
+    
+    /**
+     * Constructor for Bill Payment Standing Order with custom frequency
+     * @param systemDate The current system date (use BankSystem.getCurrentDate())
+     */
+    public StandingOrder(String id, Account sourceAccount, String rfCode,
+                         String providerName, Customer owner, 
+                         int frequencyMonths, int executionDay, LocalDate systemDate) {
+        this.id = id;
+        this.sourceAccount = sourceAccount;
+        this.rfCode = rfCode;
+        this.providerName = providerName;
+        this.type = OrderType.BILL_PAYMENT;
+        this.status = OrderStatus.ACTIVE;
+        this.createdAt = LocalDateTime.now();
+        this.owner = owner;
+        this.description = "Auto-pay bills from " + providerName;
+        this.frequencyMonths = frequencyMonths;
+        this.executionDay = executionDay;
+        calculateNextExecutionDate(systemDate);
+    }
+    
+    // ==================== BACKWARDS COMPATIBLE CONSTRUCTORS ====================
+    // These use LocalDate.now() - use for loading from CSV or when system date unavailable
+    
+    /**
+     * Constructor for Transfer Standing Order (backwards compatible)
+     * Uses LocalDate.now() - prefer the version with systemDate parameter
+     */
+    public StandingOrder(String id, Account sourceAccount, Account destinationAccount,
+                         BigDecimal amount, int frequencyMonths, int executionDay,
+                         String description, Customer owner) {
+        this(id, sourceAccount, destinationAccount, amount, frequencyMonths, executionDay,
+             description, owner, LocalDate.now());
+    }
+    
+    /**
+     * Constructor for Bill Payment Standing Order (backwards compatible)
+     * Uses LocalDate.now() - prefer the version with systemDate parameter
+     */
+    public StandingOrder(String id, Account sourceAccount, String rfCode,
+                         String providerName, Customer owner) {
+        this(id, sourceAccount, rfCode, providerName, owner, LocalDate.now());
+    }
+    
+    /**
+     * Constructor for Bill Payment with custom frequency (backwards compatible)
+     * Uses LocalDate.now() - prefer the version with systemDate parameter
+     */
+    public StandingOrder(String id, Account sourceAccount, String rfCode,
+                         String providerName, Customer owner,
+                         int frequencyMonths, int executionDay) {
+        this(id, sourceAccount, rfCode, providerName, owner, frequencyMonths, executionDay, LocalDate.now());
     }
     
     /**
      * Calculate the next execution date based on current date
      */
     public void calculateNextExecutionDate(LocalDate currentDate) {
-        if (type == OrderType.TRANSFER) {
-            LocalDate next = currentDate.withDayOfMonth(Math.min(executionDay, 
-                currentDate.lengthOfMonth()));
-            if (!next.isAfter(currentDate)) {
-                next = next.plusMonths(frequencyMonths);
-                next = next.withDayOfMonth(Math.min(executionDay, next.lengthOfMonth()));
-            }
-            this.nextExecutionDate = next;
+        // Handle both TRANSFER and BILL_PAYMENT the same way
+        int day = Math.min(executionDay, currentDate.lengthOfMonth());
+        if (day <= 0) day = 15; // Default to 15 if not set
+        
+        LocalDate next = currentDate.withDayOfMonth(day);
+        
+        // If the calculated date is not after current date, move to next period
+        if (!next.isAfter(currentDate)) {
+            int months = frequencyMonths > 0 ? frequencyMonths : 1;
+            next = next.plusMonths(months);
+            next = next.withDayOfMonth(Math.min(day, next.lengthOfMonth()));
         }
+        
+        this.nextExecutionDate = next;
     }
     
     /**
@@ -103,6 +173,10 @@ public class StandingOrder implements Serializable {
         if (type == OrderType.TRANSFER) {
             return nextExecutionDate != null && !nextExecutionDate.isAfter(currentDate);
         }
+        // For BILL_PAYMENT, also check the execution date
+        if (nextExecutionDate != null) {
+            return !nextExecutionDate.isAfter(currentDate);
+        }
         return true;  // Bill payments check for matching bills
     }
     
@@ -110,8 +184,9 @@ public class StandingOrder implements Serializable {
      * Update the order after execution
      */
     public void recordExecution() {
-        if (type == OrderType.TRANSFER && nextExecutionDate != null) {
-            nextExecutionDate = nextExecutionDate.plusMonths(frequencyMonths);
+        if (nextExecutionDate != null) {
+            int months = frequencyMonths > 0 ? frequencyMonths : 1;
+            nextExecutionDate = nextExecutionDate.plusMonths(months);
             nextExecutionDate = nextExecutionDate.withDayOfMonth(
                 Math.min(executionDay, nextExecutionDate.lengthOfMonth()));
         }
@@ -172,8 +247,10 @@ public class StandingOrder implements Serializable {
                 nextExecutionDate != null ? nextExecutionDate.format(formatter) : "N/A",
                 status);
         } else {
-            return String.format("StandingOrder[%s | BILL_PAYMENT | Provider: %s | RF: %s | %s]",
-                id, providerName, rfCode, status);
+            return String.format("StandingOrder[%s | BILL_PAYMENT | Provider: %s | RF: %s | Next: %s | %s]",
+                id, providerName, rfCode,
+                nextExecutionDate != null ? nextExecutionDate.format(formatter) : "N/A",
+                status);
         }
     }
     
@@ -195,6 +272,13 @@ public class StandingOrder implements Serializable {
         } else {
             sb.append(String.format("Provider: %s\n", providerName));
             sb.append(String.format("RF Code: %s\n", rfCode));
+            if (amount != null) {
+                sb.append(String.format("Amount: %.2f€\n", amount));
+            }
+            sb.append(String.format("Frequency: Every %d month(s)\n", frequencyMonths > 0 ? frequencyMonths : 1));
+            sb.append(String.format("Execution Day: %d\n", executionDay > 0 ? executionDay : 15));
+            sb.append(String.format("Next Execution: %s\n", 
+                nextExecutionDate != null ? nextExecutionDate.format(formatter) : "N/A"));
         }
         sb.append(String.format("Description: %s\n", description));
         return sb.toString();
