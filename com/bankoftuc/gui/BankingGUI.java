@@ -269,7 +269,7 @@ public class BankingGUI extends Application {
     /**
      * Show Admin Dashboard
      */
-    private void showAdminDashboard(AdminUser user) {
+     private void showAdminDashboard(AdminUser user) {
         BorderPane root = new BorderPane();
         
         // Top bar
@@ -283,14 +283,18 @@ public class BankingGUI extends Application {
         menu.setPrefWidth(200);
         
         Button btnUsers = createMenuButton("👥 Manage Users");
+        Button btnCreateUser = createMenuButton("➕ Create User");
         Button btnAccounts = createMenuButton("🏦 View Accounts");
+        Button btnCreateAccount = createMenuButton("➕ Create Account");
         Button btnTransactions = createMenuButton("📊 All Transactions");
         Button btnBills = createMenuButton("📄 All Bills");
         Button btnStandingOrders = createMenuButton("⏰ All Standing Orders");
         Button btnSimulate = createMenuButton("⏩ Time Simulation");
         Button btnSystemInfo = createMenuButton("ℹ️ System Info");
         
-        menu.getChildren().addAll(btnUsers, btnAccounts, btnTransactions, btnBills, btnStandingOrders,
+        menu.getChildren().addAll(btnUsers, btnCreateUser, new Separator(),
+            btnAccounts, btnCreateAccount, btnTransactions, new Separator(),
+            btnBills, btnStandingOrders,
             new Separator(), btnSimulate, btnSystemInfo);
         
         root.setLeft(menu);
@@ -302,7 +306,9 @@ public class BankingGUI extends Application {
         
         // Button actions
         btnUsers.setOnAction(e -> showUserManagement(content));
+        btnCreateUser.setOnAction(e -> showCreateUserForm(content));
         btnAccounts.setOnAction(e -> showAllAccounts(content));
+        btnCreateAccount.setOnAction(e -> showCreateAccountForm(content));
         btnTransactions.setOnAction(e -> showAllTransactions(content));
         btnBills.setOnAction(e -> showAllBills(content));
         btnStandingOrders.setOnAction(e -> showAllStandingOrders(content));
@@ -315,6 +321,7 @@ public class BankingGUI extends Application {
         Scene scene = new Scene(root, 1000, 700);
         primaryStage.setScene(scene);
     }
+
     
     /**
      * Create top navigation bar
@@ -1638,6 +1645,304 @@ public class BankingGUI extends Application {
         
         content.getChildren().add(vbox);
     }
+
+     /**
+     * Show create user form for admin
+     */
+    private void showCreateUserForm(StackPane content) {
+        content.getChildren().clear();
+        
+        VBox vbox = new VBox(15);
+        vbox.setMaxWidth(450);
+        
+        Label title = new Label("Create New User");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        // User type selection
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Individual User", "Business User", "Admin User");
+        typeCombo.setPromptText("Select User Type");
+        typeCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        // Common fields
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+        
+        TextField phoneField = new TextField();
+        phoneField.setPromptText("Phone Number");
+        
+        // Individual-specific fields
+        Label fullNameLabel = new Label("Full Name:");
+        TextField fullNameField = new TextField();
+        fullNameField.setPromptText("Full Name");
+        
+        Label addressLabel = new Label("Address:");
+        TextField addressField = new TextField();
+        addressField.setPromptText("Address");
+        
+        Label vatLabel = new Label("VAT Number:");
+        TextField vatField = new TextField();
+        vatField.setPromptText("VAT Number");
+        
+        // Business-specific fields
+        Label businessNameLabel = new Label("Business Name:");
+        TextField businessNameField = new TextField();
+        businessNameField.setPromptText("Business Name");
+        
+        // Admin-specific fields
+        Label adminLevelLabel = new Label("Admin Level:");
+        ComboBox<Integer> adminLevelCombo = new ComboBox<>();
+        adminLevelCombo.getItems().addAll(1, 2, 3);
+        adminLevelCombo.setValue(1);
+        
+        // Container for dynamic fields
+        VBox dynamicFields = new VBox(10);
+        
+        // Update dynamic fields based on type
+        typeCombo.setOnAction(e -> {
+            dynamicFields.getChildren().clear();
+            String type = typeCombo.getValue();
+            
+            if ("Individual User".equals(type)) {
+                dynamicFields.getChildren().addAll(
+                    fullNameLabel, fullNameField,
+                    addressLabel, addressField,
+                    vatLabel, vatField);
+            } else if ("Business User".equals(type)) {
+                dynamicFields.getChildren().addAll(
+                    businessNameLabel, businessNameField,
+                    vatLabel, vatField);
+            } else if ("Admin User".equals(type)) {
+                dynamicFields.getChildren().addAll(
+                    adminLevelLabel, adminLevelCombo);
+            }
+        });
+        
+        Label resultLabel = new Label();
+        resultLabel.setWrapText(true);
+        
+        Button createBtn = new Button("Create User");
+        createBtn.setStyle(STYLE_BUTTON_SUCCESS);
+        
+        createBtn.setOnAction(e -> {
+            try {
+                String type = typeCombo.getValue();
+                String username = usernameField.getText().trim();
+                String password = passwordField.getText();
+                String phone = phoneField.getText().trim();
+                
+                if (type == null || username.isEmpty() || password.isEmpty()) {
+                    resultLabel.setText("Please fill in all required fields");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                User newUser = null;
+                
+                if ("Individual User".equals(type)) {
+                    newUser = bankSystem.getUserManager().registerIndividualUser(
+                        username, password, fullNameField.getText().trim(),
+                        addressField.getText().trim(), phone, vatField.getText().trim());
+                } else if ("Business User".equals(type)) {
+                    newUser = bankSystem.getUserManager().registerBusinessUser(
+                        username, password, businessNameField.getText().trim(),
+                        phone, vatField.getText().trim());
+                } else if ("Admin User".equals(type)) {
+                    newUser = bankSystem.getUserManager().registerAdminUser(
+                        username, password, phone, adminLevelCombo.getValue());
+                }
+                
+                if (newUser != null) {
+                    bankSystem.saveToFile();
+                    resultLabel.setText("User created successfully!\nID: " + newUser.getId());
+                    resultLabel.setStyle("-fx-text-fill: green;");
+                    
+                    // Clear fields
+                    usernameField.clear();
+                    passwordField.clear();
+                    phoneField.clear();
+                    fullNameField.clear();
+                    addressField.clear();
+                    vatField.clear();
+                    businessNameField.clear();
+                }
+                
+            } catch (IllegalArgumentException ex) {
+                resultLabel.setText("Error: " + ex.getMessage());
+                resultLabel.setStyle("-fx-text-fill: red;");
+            } catch (Exception ex) {
+                resultLabel.setText("Error creating user: " + ex.getMessage());
+                resultLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+        
+        vbox.getChildren().addAll(title,
+            new Label("User Type:"), typeCombo,
+            new Label("Username:"), usernameField,
+            new Label("Password:"), passwordField,
+            new Label("Phone Number:"), phoneField,
+            dynamicFields,
+            createBtn, resultLabel);
+        
+        ScrollPane scrollPane = new ScrollPane(vbox);
+        scrollPane.setFitToWidth(true);
+        content.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show create account form for admin
+     */
+    private void showCreateAccountForm(StackPane content) {
+        content.getChildren().clear();
+        
+        VBox vbox = new VBox(15);
+        vbox.setMaxWidth(450);
+        
+        Label title = new Label("Create Account for User");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        
+        // Username input
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Enter username");
+        
+        // User info display
+        Label userInfoLabel = new Label();
+        userInfoLabel.setStyle("-fx-text-fill: #666;");
+        
+        // Check user when typing
+        usernameField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal.trim().isEmpty()) {
+                userInfoLabel.setText("");
+                return;
+            }
+            User user = bankSystem.getUserManager().findByUsername(newVal.trim());
+            if (user == null) {
+                userInfoLabel.setText("User not found");
+                userInfoLabel.setStyle("-fx-text-fill: red;");
+            } else {
+                String info = "Found: " + user.getRole();
+                if (user instanceof IndividualUser) {
+                    info += " - " + ((IndividualUser) user).getFullName();
+                } else if (user instanceof BusinessUser) {
+                    info += " - " + ((BusinessUser) user).getBusinessName();
+                }
+                userInfoLabel.setText(info);
+                userInfoLabel.setStyle("-fx-text-fill: green;");
+            }
+        });
+        
+        // Account type selection
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Personal Account", "Business Account");
+        typeCombo.setPromptText("Select Account Type");
+        typeCombo.setMaxWidth(Double.MAX_VALUE);
+        
+        // Initial balance
+        TextField balanceField = new TextField();
+        balanceField.setPromptText("Initial Balance (EUR)");
+        balanceField.setText("0.00");
+        
+        // Monthly fee (for business accounts)
+        Label feeLabel = new Label("Monthly Fee (EUR):");
+        TextField feeField = new TextField();
+        feeField.setPromptText("Monthly Maintenance Fee");
+        feeField.setText("25.00");
+        feeLabel.setVisible(false);
+        feeField.setVisible(false);
+        
+        // Show/hide fee field based on account type
+        typeCombo.setOnAction(e -> {
+            boolean isBusiness = "Business Account".equals(typeCombo.getValue());
+            feeLabel.setVisible(isBusiness);
+            feeField.setVisible(isBusiness);
+        });
+        
+        Label resultLabel = new Label();
+        resultLabel.setWrapText(true);
+        
+        Button createBtn = new Button("Create Account");
+        createBtn.setStyle(STYLE_BUTTON_SUCCESS);
+        
+        createBtn.setOnAction(e -> {
+            try {
+                String username = usernameField.getText().trim();
+                if (username.isEmpty()) {
+                    resultLabel.setText("Please enter a username");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                User user = bankSystem.getUserManager().findByUsername(username);
+                if (user == null) {
+                    resultLabel.setText("User not found: " + username);
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                String accountType = typeCombo.getValue();
+                if (accountType == null) {
+                    resultLabel.setText("Please select account type");
+                    resultLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+                
+                double balance = Double.parseDouble(balanceField.getText());
+                
+                if (accountType.equals("Personal Account")) {
+                    if (!(user instanceof IndividualUser)) {
+                        resultLabel.setText("Personal accounts can only be created for Individual users.\nThis user is: " + user.getRole());
+                        resultLabel.setStyle("-fx-text-fill: red;");
+                        return;
+                    }
+                    PersonalAccount account = bankSystem.getAccountManager().createPersonalAccount(
+                        (IndividualUser) user, new BigDecimal(balance));
+                    bankSystem.saveToFile();
+                    resultLabel.setText("Personal account created!\nIBAN: " + account.getIban());
+                    resultLabel.setStyle("-fx-text-fill: green;");
+                } else {
+                    if (!(user instanceof BusinessUser)) {
+                        resultLabel.setText("Business accounts can only be created for Business users.\nThis user is: " + user.getRole());
+                        resultLabel.setStyle("-fx-text-fill: red;");
+                        return;
+                    }
+                    double fee = Double.parseDouble(feeField.getText());
+                    BusinessAccount account = bankSystem.getAccountManager().createBusinessAccount(
+                        (BusinessUser) user, new BigDecimal(balance), new BigDecimal(fee));
+                    bankSystem.saveToFile();
+                    resultLabel.setText("Business account created!\nIBAN: " + account.getIban());
+                    resultLabel.setStyle("-fx-text-fill: green;");
+                }
+                
+                // Clear fields
+                usernameField.clear();
+                balanceField.setText("0.00");
+                userInfoLabel.setText("");
+                
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Invalid number format");
+                resultLabel.setStyle("-fx-text-fill: red;");
+            } catch (Exception ex) {
+                resultLabel.setText("Error: " + ex.getMessage());
+                resultLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+        
+        vbox.getChildren().addAll(title, 
+            new Label("Username:"), usernameField, userInfoLabel,
+            new Label("Account Type:"), typeCombo,
+            new Label("Initial Balance (EUR):"), balanceField,
+            feeLabel, feeField,
+            createBtn, resultLabel);
+        
+        content.getChildren().add(vbox);
+    }
+
+//=====================================================
+//END OF PATCH
+//=====================================================
     
     private void showTimeSimulation(StackPane content) {
         content.getChildren().clear();
